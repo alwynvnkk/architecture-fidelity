@@ -1,7 +1,7 @@
 {
   "name": "architecture-fidelity",
-  "version": "0.2.0",
-  "description": "Keeps codebase architecture coherent as features and variants are added.",
+  "version": "0.3.0",
+  "description": "Automatically checks meaningful changes for architectural fidelity without running on mechanical edits.",
   "author": {
     "name": "Architecture Fidelity contributors"
   }

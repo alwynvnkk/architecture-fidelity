@@ -20,6 +20,20 @@ The skill makes architectural reconnaissance part of implementation and review:
 
 This is intentionally not a replacement for Ruff, formatters, type checkers, or static-analysis rules. Those tools own mechanical consistency. Architecture Fidelity owns repository-level design decisions that require understanding responsibilities, callers, and change pressure.
 
+## Automatic activation
+
+The skill is implicitly invocable: Codex, Claude Code, and Pi can select it from its description without a human naming it. Its routing policy uses a significance gate rather than change frequency.
+
+It should run once during planning when a task clearly introduces or changes a responsibility, domain concept, variant, orchestration or persistence flow, dependency boundary, shared policy, or multi-implementation abstraction. If that only becomes apparent during implementation, it should run once against the final diff before handoff or PR preparation.
+
+It should not run after every edit, commit, test, or merely because a PR is approaching. Formatting, linting, generated output, documentation, copy, styles, lockfile- or version-only updates, mechanical renames, and genuinely isolated fixes take the fast path. Adding or replacing a runtime dependency still qualifies. Diff size alone does not decide: a one-line state transition may be architectural, while a large generated diff may not be.
+
+For repositories that want the same policy reinforced in `AGENTS.md` or `CLAUDE.md`, use:
+
+```markdown
+Use the installed architecture-fidelity skill automatically when a task or its resulting diff changes responsibilities, domain types or closed states, variants, runtime dependencies, orchestration or persistence flows, dependency boundaries, shared policy, or multiple implementations. Invoke it once during planning when evident; otherwise once before handoff if those signals emerge. Do not invoke it per edit or for formatting, linting, generated files, docs/copy/styles, lockfile- or version-only updates, mechanical renames, or isolated fixes with no new concept or boundary change. Re-run only if the scope materially expands after the prior pass.
+```
+
 ## Structure
 
 ```text
@@ -102,6 +116,7 @@ Invoke `/skill:architecture-fidelity` explicitly or allow Pi to select it from t
 ## Suggested prompts
 
 - `Use $architecture-fidelity to implement this feature without creating a parallel path.`
+- `Decide whether this completed diff crosses the Architecture Fidelity significance gate; if it does, run the skill once before handoff.`
 - `Review this diff for duplicated responsibilities, weak domain types, and missed extension seams.`
 - `Initialize Architecture Fidelity project memory, then audit this repository.`
 - `Run an incremental architecture audit and report only the lifecycle delta.`

@@ -1,11 +1,23 @@
 ---
 name: architecture-fidelity
-description: Preserve a codebase's architectural coherence while implementing features, refactoring, or reviewing changes. Use when work may add types, modules, services, options, variants, or duplicated behavior and should reuse existing design, expose the right abstraction, and maintain dependency boundaries. Do not use for formatting- or lint-only work, or tiny isolated edits that cannot affect an architectural boundary.
+description: Preserve architectural coherence for meaningful code changes and architecture reviews. Invoke automatically when a task or resulting diff adds or changes a production module, service, domain type, closed option or state, variant, runtime dependency, orchestration or persistence flow; crosses a dependency boundary; duplicates or moves policy; or refactors multiple implementations. Use once during planning when evident, otherwise once before handoff if the diff reveals these signals. Skip formatting, linting, generated files, docs, copy, styles, lockfile- or version-only updates, mechanical renames, and isolated fixes that add no concept or boundary change.
 ---
 
 # Architecture Fidelity
 
 Maintain the codebase's established design while improving it where the requested change supplies concrete evidence. Architectural fidelity means coherent ownership, stable boundaries, expressive domain types, and low-cost extension. It does not mean maximizing inheritance, patterns, indirection, or theoretical purity.
+
+## Invocation policy
+
+Use this skill automatically when the request or emerging implementation meets a trigger in the description; human activation is not required.
+
+- If the change clearly qualifies, invoke during planning so reconnaissance can shape the implementation.
+- If qualification becomes clear only after editing, invoke once against the final diff before handoff or PR preparation.
+- Do not invoke after every file edit, patch, commit, or test run. Re-run only when the scope materially expands into another responsibility or architectural boundary after the prior pass.
+- Diff size is not the test. A one-line lifecycle or dependency change can qualify; a large generated, formatting, copy, or mechanical diff may not.
+- The existence of code changes or an upcoming PR is not sufficient by itself. If another pass already covered the final scope, do not repeat it for ceremony.
+
+Start with a cheap significance gate: inspect the requested behavior, changed-file names and diff summary, and the project ledger plan when one exists. If no trigger applies, use the fast path and stop without loading optional references or producing an architecture report. If a trigger applies, continue with the workflow below.
 
 ## Scope control
 
@@ -14,7 +26,7 @@ Maintain the codebase's established design while improving it where the requeste
 - Do not turn a feature into a repository-wide cleanup. Fix adjacent structural debt only when the requested behavior would otherwise duplicate it, deepen it, or depend on it.
 - Preserve local conventions unless they conflict with a clear domain invariant or established repository boundary.
 - Let formatters, linters, and type checkers own mechanical rules. This skill owns design decisions those tools cannot infer.
-- For a truly local edit with no new concept, dependency, variant, or public behavior, use the fast path: find the nearest analogue, match it, test it, and stop.
+- For a truly local edit with no new concept, dependency, variant, public behavior, or ownership change, use the fast path: find the nearest analogue, match it, test it, and stop.
 
 ## Project memory
 
