@@ -1,0 +1,125 @@
+# Project Architecture Ledger
+
+Use this reference when a repository contains `.architecture-fidelity/ledger.json`, when the user asks to initialize architectural memory, or when an audit should update finding state over time.
+
+The ledger is a committed, reviewable cache of architectural claims. Source code, tests, and current repository documentation remain authoritative. Never suppress a finding solely because a similar title exists in the ledger.
+
+## What the ledger remembers
+
+It carries two kinds of memory:
+
+- **Landmarks:** healthy facts worth reusing, including canonical owners, dependency rules, extension seams, closed domain vocabularies, and approved analogous implementations.
+- **Findings:** evidence-backed architectural concerns with stable identity, anchors, status, and lifecycle history.
+
+Use repository-relative paths and symbols as anchors. Include every location needed to identify a multi-owner finding, not only the file where it was first noticed. Do not use line numbers: they are unstable and create false churn. Do not store secrets, credentials, personal data, or large code excerpts.
+
+## Helper
+
+When the packaged script is available, locate it relative to this skill and run:
+
+```bash
+python3 <skill-directory>/scripts/architecture_ledger.py --root <repository> plan
+```
+
+The commands are:
+
+- `init`: create `.architecture-fidelity/ledger.json`; do this only when the user asks to initialize memory.
+- `validate`: validate the current ledger before relying on it and after changing it.
+- `plan`: compare the last completed audit commit with `HEAD` plus tracked and untracked working-tree changes. It lists the landmarks to consult, identifies anchored landmarks and findings that need revalidation, and carries forward untouched open findings.
+- `fingerprint`: create a stable SHA-256 identity from a category, invariant, and repository path/symbol anchors.
+- `apply-delta`: atomically merge an authorized audit delta, preserve finding identity and lifecycle events, and retain the most recent 20 audit history entries.
+
+If Python or the helper is unavailable, follow the same rules manually. Do not make helper availability a prerequisite for the architectural work.
+
+## Incremental audit
+
+1. Validate the ledger and read the output of `plan`.
+2. If the baseline is missing or unavailable, perform a full audit. Never guess a diff range.
+3. Inspect changed and added surfaces against the remembered landmarks. Expand beyond changed files to their owners, direct callers, downstream consumers, registration points, tests, and the nearest analogue. Git paths are a starting set, not the complete architectural blast radius.
+4. Revalidate every landmark and finding selected by the plan. A moved or missing anchor is stale and requires investigation; it is not proof of resolution.
+5. Carry unchanged open, accepted, planned, and reopened findings without presenting them as newly discovered.
+6. Check changed surfaces for genuinely new findings and for regressions of resolved findings.
+7. Report the delta as: new, changed, still open, resolved, reopened, dismissed or accepted, and needs revalidation.
+
+Run a full audit when there is no usable baseline, the dependency structure changed broadly, repository history was rewritten, the ledger is invalid, or the user explicitly requests one. Periodic full audits are sensible, but do not invent a fixed cadence without repository evidence.
+
+## Finding identity and lifecycle
+
+A fingerprint consists of the normalized category, invariant, and sorted path/symbol anchors. Wording and severity may change without creating a new finding. Materially different ownership, invariant, or anchors require a new identity.
+
+Supported statuses:
+
+- `open`: actionable and unresolved;
+- `accepted`: explicitly accepted with a recorded reason;
+- `planned`: linked to concrete remediation work;
+- `resolved`: correction verified in the code;
+- `dismissed`: evidence showed the finding was invalid or no longer applicable;
+- `reopened`: a resolved or dismissed invariant regressed.
+
+Every status change needs current evidence, a reason, a timestamp, and the commit assessed when available. Non-open states must have a matching lifecycle event. Retain resolved and dismissed records so later regressions can be recognized. Do not treat absence, renamed files, or title similarity as resolution.
+
+## Ledger shape
+
+The repository file has this top-level structure:
+
+```json
+{
+  "schema_version": 1,
+  "project": {"name": "example"},
+  "audit": {
+    "last_complete_commit": null,
+    "completed_at": null
+  },
+  "landmarks": [],
+  "findings": [],
+  "history": []
+}
+```
+
+A landmark contains `id`, `kind`, `statement`, one or more `anchors`, `first_seen_commit`, and `last_verified_commit`. Allowed kinds are `canonical-owner`, `dependency-rule`, `extension-seam`, `domain-vocabulary`, and `approved-analogue`.
+
+A finding contains:
+
+```json
+{
+  "id": "AF-0001",
+  "fingerprint": "<sha256>",
+  "status": "open",
+  "severity": "high",
+  "category": "competing-implementation",
+  "summary": "Two routes own the same mutation policy",
+  "invariant": "A domain mutation has one canonical owner",
+  "impact": "Validation and audit behavior can diverge",
+  "correction": "Route both callers through the canonical service",
+  "owner": null,
+  "external_ref": null,
+  "anchors": [
+    {"path": "src/domain/service.py", "symbol": "save_entry"}
+  ],
+  "first_seen_commit": "<git commit>",
+  "last_verified_commit": "<git commit>",
+  "events": []
+}
+```
+
+An audit delta accepted by `apply-delta` contains a required `audit` object and optional landmark and finding upserts:
+
+```json
+{
+  "completed_at": "2026-08-30T12:00:00Z",
+  "audit": {
+    "mode": "incremental",
+    "base_commit": "<previous commit>",
+    "commit": "<assessed commit>",
+    "scope": ["src/domain/service.py"]
+  },
+  "landmarks": [],
+  "findings": []
+}
+```
+
+For a new finding, `id` and `fingerprint` may be omitted from a delta; the helper allocates them. For an existing finding, identify it by `id` or fingerprint. Include `transition_reason` when changing status. The helper preserves `first_seen_commit` and appends a lifecycle event.
+
+## Authorization
+
+A review-only request does not authorize repository edits. In that mode, report the proposed ledger delta in the response or write it only to a user-authorized output location. When repository edits are authorized, update an existing ledger as part of the coherent change if relevant. Do not initialize a ledger implicitly during ordinary feature work.

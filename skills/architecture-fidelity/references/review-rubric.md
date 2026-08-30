@@ -2,6 +2,8 @@
 
 Use this reference for explicit code reviews, architecture audits, or design assessments. Review-only requests do not authorize edits.
 
+If `.architecture-fidelity/ledger.json` exists, also read [project-ledger.md](project-ledger.md). Validate prior claims against the changed architectural blast radius and report the lifecycle delta; do not relabel carried findings as new.
+
 ## Evidence standard
 
 Report a finding only when it has:
@@ -41,6 +43,8 @@ Lead with findings ordered by severity. For each, state:
 4. the smallest architectural correction.
 
 Then list assumptions or unanswered questions. If there are no actionable findings, say so and mention any verification gap. Do not bury findings beneath a general summary.
+
+For a ledger-backed audit, add the finding ID and lifecycle state. A stable finding may change wording or severity without receiving a new ID. Report unresolved findings outside the revalidated scope as carried, not reconfirmed.
 
 ## Design assessment questions
 

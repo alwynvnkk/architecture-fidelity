@@ -14,6 +14,7 @@ The skill makes architectural reconnaissance part of implementation and review:
 - choose composition, inheritance, interfaces, strategies, factories, value objects, or plain functions according to the actual variation;
 - model closed domain choices with enums such as Python's `StrEnum` when compatibility permits;
 - preserve dependency direction, public contracts, serialized values, and one source of truth;
+- retain repository-side architectural memory so later audits revalidate changed surfaces instead of rediscovering the whole codebase;
 - avoid speculative frameworks, inheritance for code sharing, and abstractions with only superficial similarity;
 - report material reuse, new abstractions, preserved boundaries, and deliberately deferred opportunities.
 
@@ -30,13 +31,31 @@ This is intentionally not a replacement for Ruff, formatters, type checkers, or 
     └── architecture-fidelity/
         ├── SKILL.md
         ├── agents/openai.yaml
+        ├── scripts/
+        │   └── architecture_ledger.py
         └── references/
             ├── pattern-selection.md
+            ├── project-ledger.md
             ├── python.md
             └── review-rubric.md
 ```
 
 The single `SKILL.md` is canonical across all hosts. Product manifests only package that shared implementation.
+
+## Project memory
+
+Architecture Fidelity can keep a reviewable ledger at `.architecture-fidelity/ledger.json` in the repository being audited. It remembers both healthy architectural landmarks and finding lifecycles, while Git remains the source of truth.
+
+Initialize it only when you want persistent project memory:
+
+```bash
+python3 /path/to/architecture-fidelity/skills/architecture-fidelity/scripts/architecture_ledger.py \
+  --root /path/to/repository init
+```
+
+On later audits, the skill plans from the last completed commit, revalidates landmarks and findings whose anchors changed, carries untouched findings without calling them new, and recognizes resolved findings that regress. If the baseline is missing or invalid, it falls back to a full scan.
+
+The helper also supports `validate`, `plan`, `fingerprint`, and `apply-delta`. The ledger is intentionally JSON plus a dependency-free Python helper: portable across Codex, Claude Code, and Pi, easy to review in pull requests, and small enough to replace later if project scale proves that necessary.
 
 ## Try it locally
 
@@ -84,6 +103,8 @@ Invoke `/skill:architecture-fidelity` explicitly or allow Pi to select it from t
 
 - `Use $architecture-fidelity to implement this feature without creating a parallel path.`
 - `Review this diff for duplicated responsibilities, weak domain types, and missed extension seams.`
+- `Initialize Architecture Fidelity project memory, then audit this repository.`
+- `Run an incremental architecture audit and report only the lifecycle delta.`
 - `Refactor these variants into the smallest justified abstraction while preserving compatibility.`
 
 ## Design stance

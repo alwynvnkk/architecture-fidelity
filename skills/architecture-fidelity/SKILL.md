@@ -16,6 +16,12 @@ Maintain the codebase's established design while improving it where the requeste
 - Let formatters, linters, and type checkers own mechanical rules. This skill owns design decisions those tools cannot infer.
 - For a truly local edit with no new concept, dependency, variant, or public behavior, use the fast path: find the nearest analogue, match it, test it, and stop.
 
+## Project memory
+
+Before broad reconnaissance, look for `.architecture-fidelity/ledger.json`. If it exists, read [references/project-ledger.md](references/project-ledger.md), validate the ledger, and use its Git baseline to plan an incremental audit. Treat landmarks and findings as cached claims: confirm anything touched by the current change, and let current code override stale memory.
+
+Do not initialize a ledger during ordinary feature work unless the user asks. A review-only request does not authorize ledger writes; report a proposed delta instead. When an existing ledger is in scope for authorized implementation work, keep its relevant landmarks and findings current.
+
 ## Invariants
 
 ### Reuse before addition
@@ -90,7 +96,7 @@ Identify the requested behavior, likely variation axis, affected boundary, compa
 
 ### 2. Reconnoiter the repository
 
-Read repository instructions and architecture documentation. Map the relevant package/module, then search for:
+Read repository instructions and architecture documentation. Use a valid project ledger to avoid rediscovering unchanged architecture, but expand every changed path to its architectural blast radius. Map the relevant package/module, then search for:
 
 - the same domain nouns and verbs;
 - analogous types and flows;
@@ -140,4 +146,4 @@ For implementation work, keep the handoff concise and include only material item
 - **Preserved:** important boundaries or compatibility guarantees.
 - **Deferred:** nearby architectural opportunities intentionally left out of scope.
 
-Omit empty categories. For architecture audits or code reviews, read [references/review-rubric.md](references/review-rubric.md) and lead with evidence-backed findings.
+Omit empty categories. For architecture audits or code reviews, read [references/review-rubric.md](references/review-rubric.md) and lead with evidence-backed findings. When a project ledger exists, distinguish new, changed, carried, resolved, reopened, and stale findings rather than presenting every open item as a fresh discovery.

@@ -1,6 +1,6 @@
 {
   "name": "architecture-fidelity",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Keeps codebase architecture coherent as features and variants are added.",
   "author": {
     "name": "Architecture Fidelity contributors"
@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "Architecture Fidelity",
     "shortDescription": "Keep architecture coherent as code evolves.",
-    "longDescription": "Guides coding agents to reuse existing responsibilities, identify proven abstraction and specialization opportunities, model domain options explicitly, and preserve boundaries without duplicating lint rules.",
+    "longDescription": "Guides coding agents to reuse existing responsibilities, identify proven abstraction and specialization opportunities, model domain options explicitly, preserve boundaries, and maintain repository-side architectural memory without duplicating lint rules.",
     "developerName": "Architecture Fidelity contributors",
     "category": "Coding",
     "capabilities": [
