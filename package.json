@@ -1,0 +1,17 @@
+{
+  "name": "architecture-fidelity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Architectural-fidelity skill package for coding agents.",
+  "keywords": [
+    "pi-package",
+    "agent-skill",
+    "architecture",
+    "refactoring"
+  ],
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "architecture-fidelity",
+  "version": "0.1.0",
+  "description": "Keeps codebase architecture coherent as features and variants are added.",
+  "author": {
+    "name": "Architecture Fidelity contributors"
+  }
+}

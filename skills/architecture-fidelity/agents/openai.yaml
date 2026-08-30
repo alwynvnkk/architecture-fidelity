@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Fidelity"
+  short_description: "Keep codebase architecture coherent as it grows"
+  default_prompt: "Use $architecture-fidelity to implement this change with architectural fidelity."

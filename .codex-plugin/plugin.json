@@ -1,0 +1,31 @@
+{
+  "name": "architecture-fidelity",
+  "version": "0.1.0",
+  "description": "Keeps codebase architecture coherent as features and variants are added.",
+  "author": {
+    "name": "Architecture Fidelity contributors"
+  },
+  "keywords": [
+    "architecture",
+    "refactoring",
+    "code-quality",
+    "object-oriented-design"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Architecture Fidelity",
+    "shortDescription": "Keep architecture coherent as code evolves.",
+    "longDescription": "Guides coding agents to reuse existing responsibilities, identify proven abstraction and specialization opportunities, model domain options explicitly, and preserve boundaries without duplicating lint rules.",
+    "developerName": "Architecture Fidelity contributors",
+    "category": "Coding",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Implement this feature with architectural fidelity.",
+      "Review this change for architectural drift.",
+      "Find the right reuse or abstraction seam here."
+    ]
+  }
+}
