@@ -1,0 +1,14 @@
+{
+  "name": "architecture-fidelity",
+  "owner": {
+    "name": "alwynvnkk",
+    "url": "https://github.com/alwynvnkk"
+  },
+  "plugins": [
+    {
+      "name": "architecture-fidelity",
+      "source": "./",
+      "description": "Automatically checks meaningful changes for architectural fidelity without running on mechanical edits."
+    }
+  ]
+}
