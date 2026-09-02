@@ -54,7 +54,7 @@ Leave out:
 
 Keep the first delta to roughly ten landmarks and ten findings. If more seem to qualify, the bar is being applied too loosely; record the boundaries that explain the rest and let later scans add specifics with evidence. A first ledger that fits on one screen is working as intended.
 
-Write the seed through `apply-delta` with `audit.mode` set to `full` and `audit.scope` listing the surfaces actually inspected. Mention in the handoff that project memory now exists and where it lives.
+Write the seed through `apply-delta` with `audit.mode` set to `full` and `audit.scope` listing the surfaces actually inspected. When the helper is unavailable, write the same structure by hand: the helper is not a prerequisite for creating the ledger, only the more reliable way to keep finding identity and lifecycle correct. Mention in the handoff that project memory now exists and where it lives.
 
 ## Incremental audit
 
