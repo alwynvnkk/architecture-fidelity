@@ -64,7 +64,9 @@ The single `SKILL.md` is canonical across all hosts. Product manifests only pack
 
 Architecture Fidelity can keep a reviewable ledger at `.architecture-fidelity/ledger.json` in the repository being audited. It remembers both healthy architectural landmarks and finding lifecycles, while Git remains the source of truth.
 
-Initialize it only when you want persistent project memory:
+The first audit that clears the significance gate with repository edits authorized creates the ledger itself, seeded from what that pass established. It records only load-bearing architecture — canonical owners, enforced boundaries, extension seams, closed vocabularies, and findings that are high severity or span more than one module — capped at roughly ten of each, so a first ledger stays reviewable in a pull request. It does not trigger a repository-wide inventory, and it is not created at all when nothing clears that bar. A review-only request never writes it; the skill reports the proposed delta instead.
+
+To create an empty ledger up front instead:
 
 ```bash
 python3 /path/to/architecture-fidelity/skills/architecture-fidelity/scripts/architecture_ledger.py \

@@ -444,12 +444,8 @@ def apply_delta(ledger: dict[str, Any], delta: dict[str, Any]) -> dict[str, Any]
     return ledger
 
 
-def command_init(args: argparse.Namespace) -> int:
-    root = repository_root(Path(args.root).resolve())
-    path = ledger_path(root, args.ledger)
-    if path.exists():
-        raise LedgerError(f"refusing to overwrite existing ledger: {path}")
-    ledger = {
+def empty_ledger(root: Path) -> dict[str, Any]:
+    return {
         "schema_version": SCHEMA_VERSION,
         "project": {"name": root.name},
         "audit": {"last_complete_commit": None, "completed_at": None},
@@ -457,6 +453,14 @@ def command_init(args: argparse.Namespace) -> int:
         "findings": [],
         "history": [],
     }
+
+
+def command_init(args: argparse.Namespace) -> int:
+    root = repository_root(Path(args.root).resolve())
+    path = ledger_path(root, args.ledger)
+    if path.exists():
+        raise LedgerError(f"refusing to overwrite existing ledger: {path}")
+    ledger = empty_ledger(root)
     validate_ledger(ledger)
     write_json_atomic(path, ledger)
     print(path.relative_to(root))
@@ -511,12 +515,15 @@ def command_fingerprint(args: argparse.Namespace) -> int:
 def command_apply(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.root).resolve())
     path = ledger_path(root, args.ledger)
-    ledger = load_json(path)
+    # The first authorized audit of a repository creates the ledger, so memory
+    # starts on the scan that has evidence rather than a separate setup step.
+    created = not path.exists()
+    ledger = empty_ledger(root) if created else load_json(path)
     validate_ledger(ledger)
     delta = load_json(Path(args.delta).resolve())
     updated = apply_delta(ledger, delta)
     write_json_atomic(path, updated)
-    print(f"updated: {path.relative_to(root)}")
+    print(f"{'created' if created else 'updated'}: {path.relative_to(root)}")
     return 0
 
 
@@ -540,7 +547,10 @@ def parser() -> argparse.ArgumentParser:
     )
     fingerprint.set_defaults(handler=command_fingerprint)
 
-    apply = commands.add_parser("apply-delta", help="merge an authorized audit delta into the ledger")
+    apply = commands.add_parser(
+        "apply-delta",
+        help="merge an authorized audit delta, creating the ledger when absent",
+    )
     apply.add_argument("--delta", required=True, help="path to the audit delta JSON")
     apply.set_defaults(handler=command_apply)
     return result

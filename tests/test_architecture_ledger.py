@@ -244,6 +244,74 @@ class ArchitectureLedgerTests(unittest.TestCase):
 
         self.assertNotEqual(lower, upper)
 
+    def apply_delta_cli(self, delta: dict) -> str:
+        delta_path = self.root / "delta.json"
+        delta_path.write_text(json.dumps(delta), encoding="utf-8")
+        return subprocess.run(
+            ["python3", str(SCRIPT), "--root", str(self.root), "apply-delta", "--delta", str(delta_path)],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+
+    def seed_delta(self) -> dict:
+        return {
+            "audit": {"mode": "full", "base_commit": None, "commit": self.commit, "scope": ["src/service.py"]},
+            "landmarks": [
+                {
+                    "id": "owner-service",
+                    "kind": "canonical-owner",
+                    "statement": "The service owns the policy",
+                    "anchors": [{"path": "src/service.py", "symbol": "VALUE"}],
+                    "first_seen_commit": self.commit,
+                    "last_verified_commit": self.commit,
+                }
+            ],
+        }
+
+    def test_apply_delta_creates_the_ledger_on_a_first_scan(self) -> None:
+        path = self.root / ".architecture-fidelity/ledger.json"
+        self.assertFalse(path.exists())
+
+        output = self.apply_delta_cli(self.seed_delta())
+
+        self.assertTrue(output.startswith("created:"), output)
+        written = json.loads(path.read_text())
+        ledger_module.validate_ledger(written)
+        self.assertEqual([item["id"] for item in written["landmarks"]], ["owner-service"])
+        self.assertEqual(written["audit"]["last_complete_commit"], self.commit)
+        self.assertEqual(written["project"]["name"], self.root.name)
+
+    def test_apply_delta_reports_an_update_for_an_existing_ledger(self) -> None:
+        path = self.root / ".architecture-fidelity/ledger.json"
+        existing = self.ledger()
+        existing["landmarks"][0]["id"] = "owner-existing"
+        ledger_module.write_json_atomic(path, existing)
+
+        output = self.apply_delta_cli(self.seed_delta())
+
+        self.assertTrue(output.startswith("updated:"), output)
+        written = json.loads(path.read_text())
+        ledger_module.validate_ledger(written)
+        self.assertEqual(
+            sorted(item["id"] for item in written["landmarks"]),
+            ["owner-existing", "owner-service"],
+        )
+
+    def test_init_still_refuses_to_overwrite_an_existing_ledger(self) -> None:
+        path = self.root / ".architecture-fidelity/ledger.json"
+        ledger_module.write_json_atomic(path, self.ledger())
+
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--root", str(self.root), "init"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("refusing to overwrite", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
