@@ -1,6 +1,6 @@
 # Architecture Fidelity
 
-Architecture Fidelity is a shared agent skill for Codex, Claude Code, and Pi. It keeps feature work aligned with the codebase's existing responsibilities and extension seams as the system grows.
+Architecture Fidelity is a shared agent skill for Codex, Claude Code, GitHub Copilot, and Pi. It keeps feature work aligned with the codebase's existing responsibilities and extension seams as the system grows.
 
 It addresses a recurring failure mode in agent-written code: the requested behavior works, but arrives as a parallel service, raw string option, duplicated branch, or new helper even though the repository already contains the right concept.
 
@@ -22,13 +22,13 @@ This is intentionally not a replacement for Ruff, formatters, type checkers, or 
 
 ## Automatic activation
 
-The skill is implicitly invocable: Codex, Claude Code, and Pi can select it from its description without a human naming it. Its routing policy uses a significance gate rather than change frequency.
+The skill is implicitly invocable: Codex, Claude Code, GitHub Copilot, and Pi can select it from its description without a human naming it. Its routing policy uses a significance gate rather than change frequency.
 
 It should run once during planning when a task clearly introduces or changes a responsibility, domain concept, variant, orchestration or persistence flow, dependency boundary, shared policy, or multi-implementation abstraction. If that only becomes apparent during implementation, it should run once against the final diff before handoff or PR preparation.
 
 It should not run after every edit, commit, test, or merely because a PR is approaching. Formatting, linting, generated output, documentation, copy, styles, lockfile- or version-only updates, mechanical renames, and genuinely isolated fixes take the fast path. Adding or replacing a runtime dependency still qualifies. Diff size alone does not decide: a one-line state transition may be architectural, while a large generated diff may not be.
 
-For repositories that want the same policy reinforced in `AGENTS.md` or `CLAUDE.md`, use:
+For repositories that want the same policy reinforced in `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`, use:
 
 ```markdown
 Use the installed architecture-fidelity skill automatically when a task or its resulting diff changes responsibilities, domain types or closed states, variants, runtime dependencies, orchestration or persistence flows, dependency boundaries, shared policy, or multiple implementations. Invoke it once during planning when evident; otherwise once before handoff if those signals emerge. Do not invoke it per edit or for formatting, linting, generated files, docs/copy/styles, lockfile- or version-only updates, mechanical renames, or isolated fixes with no new concept or boundary change. Re-run only if the scope materially expands after the prior pass.
@@ -40,6 +40,10 @@ Use the installed architecture-fidelity skill automatically when a task or its r
 .
 ├── .claude-plugin/plugin.json
 ├── .codex-plugin/plugin.json
+├── .copilot-plugin/
+│   ├── agents/architecture-fidelity.agent.md
+│   ├── instructions/architecture-fidelity.instructions.md
+│   └── prompts/architecture-fidelity.prompt.md
 ├── package.json
 └── skills/
     └── architecture-fidelity/
@@ -54,13 +58,15 @@ Use the installed architecture-fidelity skill automatically when a task or its r
             └── review-rubric.md
 ```
 
-The single `SKILL.md` is canonical across all hosts. Product manifests only package that shared implementation.
+The single `SKILL.md` is canonical across all hosts. Product manifests only package that shared implementation, and the Copilot adapters under `.copilot-plugin/` route to it rather than restating it.
 
 ## Project memory
 
 Architecture Fidelity can keep a reviewable ledger at `.architecture-fidelity/ledger.json` in the repository being audited. It remembers both healthy architectural landmarks and finding lifecycles, while Git remains the source of truth.
 
-Initialize it only when you want persistent project memory:
+The first audit that clears the significance gate with repository edits authorized creates the ledger itself, seeded from what that pass established. It records only load-bearing architecture — canonical owners, enforced boundaries, extension seams, closed vocabularies, and findings that are high severity or span more than one module — capped at roughly ten of each, so a first ledger stays reviewable in a pull request. It does not trigger a repository-wide inventory, and it is not created at all when nothing clears that bar. A review-only request never writes it; the skill reports the proposed delta instead.
+
+To create an empty ledger up front instead:
 
 ```bash
 python3 /path/to/architecture-fidelity/skills/architecture-fidelity/scripts/architecture_ledger.py \
@@ -69,7 +75,7 @@ python3 /path/to/architecture-fidelity/skills/architecture-fidelity/scripts/arch
 
 On later audits, the skill plans from the last completed commit, revalidates landmarks and findings whose anchors changed, carries untouched findings without calling them new, and recognizes resolved findings that regress. If the baseline is missing or invalid, it falls back to a full scan.
 
-The helper also supports `validate`, `plan`, `fingerprint`, and `apply-delta`. The ledger is intentionally JSON plus a dependency-free Python helper: portable across Codex, Claude Code, and Pi, easy to review in pull requests, and small enough to replace later if project scale proves that necessary.
+The helper also supports `validate`, `plan`, `fingerprint`, and `apply-delta`. The ledger is intentionally JSON plus a dependency-free Python helper: portable across Codex, Claude Code, GitHub Copilot, and Pi, easy to review in pull requests, and small enough to replace later if project scale proves that necessary.
 
 ## Try it locally
 
@@ -96,6 +102,30 @@ claude --plugin-dir "/absolute/path/to/architecture-fidelity"
 ```
 
 Invoke `/architecture-fidelity:architecture-fidelity`, or let Claude select it for matching work. Run `/reload-plugins` after edits.
+
+### GitHub Copilot
+
+Copilot reads its customization from the repository being worked on rather than from an installed plugin, so the skill and its adapters are installed into that repository's `.github/` directory:
+
+```bash
+mkdir -p /path/to/repository/.github/skills
+cp -R "/absolute/path/to/architecture-fidelity/skills/architecture-fidelity" \
+  /path/to/repository/.github/skills/
+cp -R "/absolute/path/to/architecture-fidelity/.copilot-plugin/agents" \
+      "/absolute/path/to/architecture-fidelity/.copilot-plugin/instructions" \
+      "/absolute/path/to/architecture-fidelity/.copilot-plugin/prompts" \
+  /path/to/repository/.github/
+```
+
+The `.copilot-plugin/` subdirectories mirror their destinations under `.github/`, so nothing needs renaming. Each adapter covers a different Copilot surface:
+
+- `instructions/architecture-fidelity.instructions.md` carries the significance gate and applies to every request (`applyTo: "**"`), so Copilot routes to the skill without being named. This is the Copilot equivalent of implicit invocation.
+- `prompts/architecture-fidelity.prompt.md` adds `/architecture-fidelity` in Copilot Chat for an explicit pass on the current task or diff.
+- `agents/architecture-fidelity.agent.md` registers a custom agent for delegated work, including Copilot coding agent.
+
+All three route to `.github/skills/architecture-fidelity/SKILL.md` instead of restating its rules, so the canonical skill stays the only place the invariants are maintained. Install only the surfaces you want; the instructions file alone is enough for automatic activation.
+
+During local development the skill directory can be a symlink, but Copilot coding agent on github.com only sees committed files, so copy it for that surface. Repositories that prefer a single instructions file can instead reference the skill from `.github/copilot-instructions.md` or `AGENTS.md` using the snippet in [Automatic activation](#automatic-activation).
 
 ### Pi
 

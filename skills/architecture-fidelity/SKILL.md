@@ -32,7 +32,9 @@ Start with a cheap significance gate: inspect the requested behavior, changed-fi
 
 Before broad reconnaissance, look for `.architecture-fidelity/ledger.json`. If it exists, read [references/project-ledger.md](references/project-ledger.md), validate the ledger, and use its Git baseline to plan an incremental audit. Treat landmarks and findings as cached claims: confirm anything touched by the current change, and let current code override stale memory.
 
-Do not initialize a ledger during ordinary feature work unless the user asks. A review-only request does not authorize ledger writes; report a proposed delta instead. When an existing ledger is in scope for authorized implementation work, keep its relevant landmarks and findings current.
+If no ledger exists, this pass cleared the significance gate, and repository edits are authorized, create one from what this pass already established. Seed only load-bearing architecture: canonical owners, enforced boundaries, extension seams, closed vocabularies, and findings that are high severity or span more than one module. Keep it to roughly ten landmarks and ten findings, and do not start a repository-wide inventory to fill it. If nothing clears that bar, do not create the file.
+
+A review-only request does not authorize ledger writes, including creating it; report a proposed delta instead. When an existing ledger is in scope for authorized implementation work, keep its relevant landmarks and findings current, and say in the handoff when the ledger was created or changed.
 
 ## Invariants
 

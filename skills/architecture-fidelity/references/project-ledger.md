@@ -23,13 +23,38 @@ python3 <skill-directory>/scripts/architecture_ledger.py --root <repository> pla
 
 The commands are:
 
-- `init`: create `.architecture-fidelity/ledger.json`; do this only when the user asks to initialize memory.
+- `init`: create an empty `.architecture-fidelity/ledger.json` explicitly. This is optional: `apply-delta` creates the ledger when it is absent.
 - `validate`: validate the current ledger before relying on it and after changing it.
 - `plan`: compare the last completed audit commit with `HEAD` plus tracked and untracked working-tree changes. It lists the landmarks to consult, identifies anchored landmarks and findings that need revalidation, and carries forward untouched open findings.
 - `fingerprint`: create a stable SHA-256 identity from a category, invariant, and repository path/symbol anchors.
-- `apply-delta`: atomically merge an authorized audit delta, preserve finding identity and lifecycle events, and retain the most recent 20 audit history entries.
+- `apply-delta`: atomically merge an authorized audit delta, creating the ledger when absent, preserving finding identity and lifecycle events, and retaining the most recent 20 audit history entries. It prints `created:` or `updated:` so the first scan is visible in the handoff.
 
 If Python or the helper is unavailable, follow the same rules manually. Do not make helper availability a prerequisite for the architectural work.
+
+## First scan
+
+When repository edits are authorized and no ledger exists, seed one from the pass you just performed. Do not start a repository-wide inventory to fill it: the first ledger records what this scan already established, and later scans extend it.
+
+Seed only load-bearing architecture. The test for every entry is whether a future change could plausibly violate it and whether that would be expensive to discover again. If an entry fails either half, leave it out.
+
+Record:
+
+- the canonical owner of a domain concept that has more than one plausible home;
+- a dependency rule or boundary the repository actually enforces;
+- an extension seam a future variant is expected to use;
+- a closed domain vocabulary whose values must stay in step with serialization;
+- a finding of `high` severity, or one whose invariant spans more than one module.
+
+Leave out:
+
+- anything a formatter, linter, or type checker already enforces;
+- local duplication, naming preferences, and single-file cleanups;
+- `low` and `opportunity` findings, and `approved-analogue` landmarks, on a first scan;
+- restatements of what a single file makes obvious on sight.
+
+Keep the first delta to roughly ten landmarks and ten findings. If more seem to qualify, the bar is being applied too loosely; record the boundaries that explain the rest and let later scans add specifics with evidence. A first ledger that fits on one screen is working as intended.
+
+Write the seed through `apply-delta` with `audit.mode` set to `full` and `audit.scope` listing the surfaces actually inspected. Mention in the handoff that project memory now exists and where it lives.
 
 ## Incremental audit
 
@@ -122,4 +147,4 @@ For a new finding, `id` and `fingerprint` may be omitted from a delta; the helpe
 
 ## Authorization
 
-A review-only request does not authorize repository edits. In that mode, report the proposed ledger delta in the response or write it only to a user-authorized output location. When repository edits are authorized, update an existing ledger as part of the coherent change if relevant. Do not initialize a ledger implicitly during ordinary feature work.
+A review-only request does not authorize repository edits, including creating the ledger. In that mode, report the proposed ledger delta in the response or write it only to a user-authorized output location. When repository edits are authorized, create the ledger on the first qualifying scan and keep an existing one current as part of the coherent change. Creating the ledger is a visible part of the change: mention it in the handoff so it can be reviewed or reverted like any other file.
