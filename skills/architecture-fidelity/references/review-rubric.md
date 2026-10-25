@@ -20,14 +20,14 @@ A measured finding also survives disagreement. "Many modules write SQL directly"
 
 ## Review order
 
-1. **Competing implementations:** two sources of truth, bypassed orchestrators, duplicated policy, or new paths that overlap existing ones.
+1. **Competing implementations:** two sources of truth, bypassed orchestrators, duplicated policy, or new paths that overlap existing ones. Search for the shapes the diff writes rather than judging from the diff alone — a third instance of a validation, mapping, or error sequence is this finding, and it is invisible without a search. State the occurrence count; three copies of one invariant that already disagree is a defect, not a preference.
 2. **Broken boundaries:** inward dependencies on frameworks/vendors, misplaced ownership, cross-layer state mutation, or dependency cycles.
 3. **Invalid domain states:** raw literals, boolean combinations, primitive clusters, or unvalidated mappings that should be one typed concept.
 4. **Unmodeled variation:** growing switches, flags, or copy-pasted flows where a proven extension seam exists.
 5. **Unsound abstraction:** inheritance without substitution, broad interfaces, optional base methods, utility dumping grounds, or speculative frameworks.
 6. **Contract drift:** incompatible public, serialized, schema, configuration, error, or lifecycle changes.
 7. **Test architecture:** variants without shared contract tests, invariants tested only through UI/transport, or wiring with no integration coverage. Where the boundary carries delivery, concurrency, or lifecycle, also look for absent failure-mode coverage: duplicate delivery, concurrent claims, out-of-order events, cancellation races, restart recovery, and failure immediately either side of an external side effect. A rule that arrived after its violations and is enforced only by prose, rather than by a ratcheted list of the known ones, is a finding of this kind.
-8. **Unnecessary surface area:** new files, dependencies, wrappers, or concepts that an existing construct can absorb.
+8. **Unnecessary surface area:** new files, dependencies, wrappers, or concepts that an existing construct can absorb — and code that should not exist at all: an unused parameter or extension point, an interface with one implementation, configuration for a value nothing changes, a forwarding wrapper that adds no invariant, handling for a state already excluded, or a generalization justified only by a future nobody has stated. Also the inverse: a hand-rolled implementation of what the standard library, framework, or an installed dependency already does.
 
 ## Severity
 

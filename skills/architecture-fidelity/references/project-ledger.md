@@ -83,6 +83,18 @@ Supported statuses:
 
 Every status change needs current evidence, a reason, a timestamp, and the commit assessed when available. Non-open states must have a matching lifecycle event. Retain resolved and dismissed records so later regressions can be recognized. Do not treat absence, renamed files, or title similarity as resolution.
 
+### Repetition findings
+
+A repeated shape is the finding most worth carrying between sessions, because each individual encounter looks minor and the cost is only visible in the count. It needs care, because the obvious encoding defeats itself.
+
+Anchor a repetition finding on **the concept**, not on every occurrence: the location where the shared owner belongs, plus the first occurrence. Record the full occurrence list in `impact`, with a count.
+
+The reason is the identity rule above. A fingerprint includes the sorted anchors, so anchoring every occurrence means a fifth instance mints a new finding and the count silently restarts at one — the exact failure the finding exists to record. A count that lives in `impact` is wording, which may change freely while the identity holds, so the finding accumulates instead of forking.
+
+This splits the work deliberately: the repetition sweep in the skill's workflow **detects** occurrences, and the ledger **remembers** the running total and what was decided. Do not rely on `plan` to resurface a repetition finding when a new instance lands in an unanchored file; it will not see it, and the sweep is what catches it.
+
+When the count rises, update `impact` and, where warranted, `severity`, and add a lifecycle event recording the new total. When the shape is finally centralized, resolve it against the commit that did so, naming the occurrences removed. An `accepted` repetition finding states why the instances stay apart — different owners, divergent reasons to change — so the next pass does not reopen a decision that was already made with evidence.
+
 ## Ledger shape
 
 The repository file has this top-level structure:

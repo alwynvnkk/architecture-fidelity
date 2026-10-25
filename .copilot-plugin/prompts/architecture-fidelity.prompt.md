@@ -16,10 +16,15 @@ reconnoiter the repository by responsibility, state the design decision, then
 either implement the smallest coherent delta or, for a review-only request,
 report findings without editing files.
 
+Where code was added or changed, run the repetition sweep before verifying:
+three to five distinctive tokens from what was written, searched across the
+whole repository, then the skill's occurrence count applied to each real hit.
+
 If `.architecture-fidelity/ledger.json` exists, plan incrementally from its Git
 baseline and distinguish new, changed, carried, resolved, reopened, and stale
 findings. Do not initialize or write a ledger unless asked.
 
 Close with the reporting section from the skill: reused constructs, introduced
-abstractions and their evidence, preserved boundaries, and deliberately deferred
-opportunities. Omit empty categories.
+abstractions and their evidence, preserved boundaries, what the repetition sweep
+searched for and found, anything deliberately not written, and deliberately
+deferred opportunities. Omit empty categories.

@@ -8,8 +8,12 @@ It addresses a recurring failure mode in agent-written code: the requested behav
 
 The skill makes architectural reconnaissance part of implementation and review:
 
+- ask whether the code needs to exist before asking what shape it should take, and delete speculative parameters, single-implementation interfaces, and configuration nothing changes;
 - search by responsibility before adding types, modules, services, or dependencies;
 - prefer reuse, extension, and evidence-backed generalization over parallel implementation;
+- count occurrences of a repeated shape — ignore one, examine two, and refuse to leave three unaddressed or unrecorded;
+- sweep the repository for the shapes a change just wrote, mechanically and including on the fast path, so a third copy is caught by search rather than by recall;
+- treat a fix that resists several attempts, needs a flag in shared code, or spans four files as evidence about the shape rather than the difficulty;
 - recognize semantic duplication in validation, state transitions, mappings, errors, and orchestration;
 - choose composition, inheritance, interfaces, strategies, factories, value objects, or plain functions according to the actual variation;
 - model closed domain choices with enums such as Python's `StrEnum` when compatibility permits;
@@ -28,12 +32,16 @@ The skill is implicitly invocable: Codex, Claude Code, GitHub Copilot, and Pi ca
 
 It should run once during planning when a task clearly introduces or changes a responsibility, domain concept, variant, orchestration or persistence flow, dependency boundary, shared policy, or multi-implementation abstraction. If that only becomes apparent during implementation, it should run once against the final diff before handoff or PR preparation.
 
+It should also run when a change writes logic that may already exist elsewhere, when a fix has resisted two or more attempts, and when a fix needs a new flag or special case inside shared code. Those are the signals of a repeated shape or a misplaced owner, and they are the ones a long task spent inside one hard problem misses.
+
 It should not run after every edit, commit, test, or merely because a PR is approaching. Formatting, linting, generated output, documentation, copy, styles, lockfile- or version-only updates, mechanical renames, and genuinely isolated fixes take the fast path. Adding or replacing a runtime dependency still qualifies. Diff size alone does not decide: a one-line state transition may be architectural, while a large generated diff may not be.
+
+One check is not gated by the significance decision. The repetition sweep runs whenever code was added or changed, fast path included, because whether a change repeats something depends on what the rest of the repository contains rather than on anything visible in the request or the file names. It is bounded to a few searches so there is no reason to skip it.
 
 For repositories that want the same policy reinforced in `AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`, use:
 
 ```markdown
-Use the installed architecture-fidelity skill automatically when a task or its resulting diff changes responsibilities, domain types or closed states, variants, runtime dependencies, orchestration or persistence flows, dependency boundaries, shared policy, or multiple implementations. Invoke it once during planning when evident; otherwise once before handoff if those signals emerge. Do not invoke it per edit or for formatting, linting, generated files, docs/copy/styles, lockfile- or version-only updates, mechanical renames, or isolated fixes with no new concept or boundary change. Re-run only if the scope materially expands after the prior pass.
+Use the installed architecture-fidelity skill automatically when a task or its resulting diff changes responsibilities, domain types or closed states, variants, runtime dependencies, orchestration or persistence flows, dependency boundaries, shared policy, or multiple implementations. Also use it when the change writes validation, mapping, error handling, state transitions, or a call sequence that may already exist elsewhere; when a fix has resisted two or more attempts; and when a fix needs a new flag, parameter, or special case inside shared code. Invoke it once during planning when evident; otherwise once before handoff if those signals emerge. Do not invoke it per edit or for formatting, linting, generated files, docs/copy/styles, lockfile- or version-only updates, mechanical renames, or isolated fixes that introduce no concept, cross no boundary, and repeat nothing already in the repository. Re-run only if the scope materially expands after the prior pass. Its repetition sweep runs whenever code changed, including on the fast path, because repetition cannot be judged from the request or the file names.
 ```
 
 ## Structure
@@ -54,6 +62,7 @@ Use the installed architecture-fidelity skill automatically when a task or its r
         ├── scripts/
         │   └── architecture_ledger.py
         └── references/
+            ├── duplication-sweep.md
             ├── pattern-selection.md
             ├── project-ledger.md
             ├── python.md
