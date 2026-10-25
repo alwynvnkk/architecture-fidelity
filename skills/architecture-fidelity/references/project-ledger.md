@@ -70,7 +70,9 @@ Run a full audit when there is no usable baseline, the dependency structure chan
 
 ## Finding identity and lifecycle
 
-A fingerprint consists of the normalized category, invariant, and sorted path/symbol anchors. Wording and severity may change without creating a new finding. Materially different ownership, invariant, or anchors require a new identity.
+A fingerprint consists of the normalized category, invariant, and sorted path/symbol anchors. Materially different ownership, invariant, or anchors require a new identity.
+
+Severity, and the wording of `summary`, `impact` and `correction`, may change freely on an existing finding — that is how a sharpened or re-evidenced finding stays one record. The `invariant` text is **not** free wording: it is fingerprinted, so rephrasing it is refused as an attempted identity change. Sharpen the summary instead, and reserve a new `invariant` for a genuinely different rule.
 
 Supported statuses:
 
