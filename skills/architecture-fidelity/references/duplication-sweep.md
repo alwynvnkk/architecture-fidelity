@@ -23,6 +23,13 @@ Good tokens, roughly best first:
 
 Weak tokens to avoid: language keywords, framework method names, common verbs like `get`, `create`, `validate`, `handle`, and any single short identifier. If a search returns more than about thirty hits, the token was wrong — pick a narrower one rather than reading the results.
 
+Two traps are worth naming, because both produce confident nonsense rather than obvious noise:
+
+- **An interpolated string is not a literal.** Searching for a fragment of an f-string or a concatenation matches the *syntax around the interpolation*, not the message. Tokens like `": VERSION,"` or `"] if direction =="` are fragments of expressions and will hit dozens of unrelated files. Take the longest run of plain prose inside the string, or use a different token type.
+- **Snapshots and pinned copies flood the results.** A repository that keeps vendored dependencies, generated output, pinned predecessor copies of a module, or executable evidence artifacts under a documentation tree will return many hits that are all the same file at different times. Exclude those paths before judging anything: four hits in four snapshot directories is one occurrence, not four, and counting them as four invents a pattern that does not exist.
+
+Confirm what the search actually covered. A result that looks like a strong pattern and comes entirely from one excluded tree is the most misleading outcome available.
+
 ## Search the whole repository
 
 Search the repository, not the module. The point is to see outside the task's context, and a sibling module is where a copy most often lives.
@@ -55,6 +62,19 @@ New code validates an uploaded file and raises on failure. Distinctive tokens: t
 Three semantic occurrences including the new one. Reading them shows one rule — the accepted type set and the size ceiling — enforced three times with two slightly different limits, which is already a latent bug rather than a style problem. The finding is not "this code is duplicated"; it is "the upload constraint has no owner, and the three copies already disagree."
 
 That reframing is the sweep's real output. A count turns a maintenance preference into a defect with evidence.
+
+## A second shape: the bypassed owner
+
+A sweep over a 322k-line repository searched two token types — repeated prose strings and a repeated literal SQL statement — and surfaced one statement appearing in four modules inside a persistence package: a share lock taken on the migration table while importing, each time beside a different exclusive lock on that module's own tables.
+
+The per-module lock is legitimately local. The migration fence is not: it enforces one invariant, that an import cannot run while a migration does, and a change to that rule must change every copy.
+
+Searching the names around it then found five module-level functions sharing one name and three different signatures, where one delegated to a shared owner and another reimplemented forty lines of schema verification independently. Which makes the finding sharper than "this is duplicated": an owner exists and is used in one place and bypassed in another, and one copy's signature admits a write mode the others do not.
+
+Two lessons generalize from it:
+
+- **The name search comes after the token search, not instead of it.** Grepping the function name finds this instantly — but only for someone who already knows the name. The next module to need the guard will not know it, and will write a sixth copy. The literal token is what surfaces the concept without knowing what it is called.
+- **Stop at the finding, not the verdict.** Whether the reimplementation is a bypass or a legitimately separate concern turned on whether provider telemetry and exact-history import share an invariant — a question for whoever owns them. Report the count, the divergence, and the question. Deciding it unilaterally from a search result is how a sweep becomes a refactor nobody asked for.
 
 ## When the correction is out of scope
 
