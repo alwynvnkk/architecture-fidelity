@@ -11,9 +11,12 @@ Report a finding only when it has:
 - a concrete location and affected responsibility;
 - evidence from definitions plus callers, tests, or an analogous path;
 - a credible maintenance, correctness, compatibility, or extension cost;
+- a count wherever the cost is one of scale — occurrences, call sites, modules affected, readers and writers of the contested type — rather than an adjective;
 - the smallest viable direction for correction.
 
 Do not report a pattern preference without a demonstrated consequence. Distinguish confirmed defects from forward-looking opportunities.
+
+A measured finding also survives disagreement. "Many modules write SQL directly" invites an argument about taste; "190 modules outside the persistence boundary hold 1,576 SQL statements, and the most-read table has 4 writers and 52 readers" states a cost. The same count later shows whether the correction is working.
 
 ## Review order
 
@@ -23,7 +26,7 @@ Do not report a pattern preference without a demonstrated consequence. Distingui
 4. **Unmodeled variation:** growing switches, flags, or copy-pasted flows where a proven extension seam exists.
 5. **Unsound abstraction:** inheritance without substitution, broad interfaces, optional base methods, utility dumping grounds, or speculative frameworks.
 6. **Contract drift:** incompatible public, serialized, schema, configuration, error, or lifecycle changes.
-7. **Test architecture:** variants without shared contract tests, invariants tested only through UI/transport, or wiring with no integration coverage.
+7. **Test architecture:** variants without shared contract tests, invariants tested only through UI/transport, or wiring with no integration coverage. Where the boundary carries delivery, concurrency, or lifecycle, also look for absent failure-mode coverage: duplicate delivery, concurrent claims, out-of-order events, cancellation races, restart recovery, and failure immediately either side of an external side effect. A rule that arrived after its violations and is enforced only by prose, rather than by a ratcheted list of the known ones, is a finding of this kind.
 8. **Unnecessary surface area:** new files, dependencies, wrappers, or concepts that an existing construct can absorb.
 
 ## Severity

@@ -16,6 +16,8 @@ The skill makes architectural reconnaissance part of implementation and review:
 - preserve dependency direction, public contracts, serialized values, and one source of truth;
 - retain repository-side architectural memory so later audits revalidate changed surfaces instead of rediscovering the whole codebase;
 - avoid speculative frameworks, inheritance for code sharing, and abstractions with only superficial similarity;
+- enforce a rule that arrived after its violations with a ratcheted list of the known ones, rather than prose or a repository-wide sweep;
+- verify a structural move against a characterisation pin instead of asserting that behaviour was preserved;
 - report material reuse, new abstractions, preserved boundaries, and deliberately deferred opportunities.
 
 This is intentionally not a replacement for Ruff, formatters, type checkers, or static-analysis rules. Those tools own mechanical consistency. Architecture Fidelity owns repository-level design decisions that require understanding responsibilities, callers, and change pressure.
@@ -55,7 +57,8 @@ Use the installed architecture-fidelity skill automatically when a task or its r
             ├── pattern-selection.md
             ├── project-ledger.md
             ├── python.md
-            └── review-rubric.md
+            ├── review-rubric.md
+            └── safe-refactor.md
 ```
 
 The single `SKILL.md` is canonical across all hosts. Product manifests only package that shared implementation, and the Copilot adapters under `.copilot-plugin/` route to it rather than restating it.

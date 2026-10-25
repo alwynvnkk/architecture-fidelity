@@ -100,13 +100,24 @@ When adding a variant, inspect the full family for:
 - Preserve public APIs, serialized values, persistence schemas, and configuration compatibility unless the task authorizes a break.
 - When centralizing an existing concept, update all in-scope callers or provide an explicit compatibility path. Do not leave two competing sources of truth.
 - Test at the abstraction boundary: shared contract tests for variants, invariant tests for value objects, and integration tests for wiring.
+- Where the boundary carries delivery, concurrency, or lifecycle, cover its failure modes rather than its happy path: duplicate delivery, concurrent claims, out-of-order events, cancellation races, restart recovery, and failure immediately before and after each external side effect.
 - Prefer deleting replaced paths over retaining dead wrappers, but verify callers before removal.
+
+### Enforce a new rule with a ratchet, not a sweep
+
+A boundary introduced after its violations exist is usually written down and then ignored. Neither a repository-wide sweep nor silent grandfathering is the answer.
+
+Enumerate the existing violations in a test, assert that nothing new may join them, and allow the list only to shrink. The frozen list carries the count the rule is meant to drive to zero, so the invariant becomes measurable rather than aspirational, and the next change cannot quietly add to it.
+
+Apply this when a rule arrives late: a closed vocabulary still stored as strings, a dependency cycle, drift between a schema and its migrations, a base type that must not be constructed directly. Prefer it to a conditional exemption inside the production code.
 
 ## Workflow
 
 ### 1. Establish the change pressure
 
 Identify the requested behavior, likely variation axis, affected boundary, compatibility constraints, and what must remain unchanged. For a review-only request, do not edit files.
+
+When the case for a structural change is that the current shape is costly, count it: occurrences, call sites, modules affected, readers and writers of the contested table or type. A number distinguishes a real boundary problem from a stylistic preference, and it gives a ratchet its starting value.
 
 ### 2. Reconnoiter the repository
 
@@ -136,6 +147,8 @@ If none of these decisions is material, use the fast path.
 ### 4. Implement the smallest coherent delta
 
 Place behavior with its owner. Reuse the central path, consolidate in-scope duplicates, keep boundaries narrow, and avoid parallel frameworks. Add a new abstraction and its first specialization together only when the evidence above justifies it.
+
+When the change moves or reshapes existing behavior rather than adding new behavior, read [references/safe-refactor.md](references/safe-refactor.md) before editing. A structural move with no observable behavior change is verifiable, and that property is worth more than the speed of making the move.
 
 Do not add unused extension points for imagined future cases.
 
