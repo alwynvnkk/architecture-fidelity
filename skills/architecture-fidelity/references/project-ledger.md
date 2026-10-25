@@ -146,6 +146,7 @@ An audit delta accepted by `apply-delta` contains a required `audit` object and 
   "completed_at": "2026-08-30T12:00:00Z",
   "audit": {
     "mode": "incremental",
+    "complete": false,
     "base_commit": "<previous commit>",
     "commit": "<assessed commit>",
     "scope": ["src/domain/service.py"]
@@ -156,6 +157,16 @@ An audit delta accepted by `apply-delta` contains a required `audit` object and 
 ```
 
 For a new finding, `id` and `fingerprint` may be omitted from a delta; the helper allocates them. For an existing finding, identify it by `id` or fingerprint. Include `transition_reason` when changing status. The helper preserves `first_seen_commit` and appends a lifecycle event.
+
+### `complete` governs the baseline
+
+`audit.complete` says whether this pass covered its whole planned scope. Only a complete pass moves `audit.last_complete_commit`; every pass is recorded in `history` either way.
+
+This matters because `plan` computes the next scope as `last_complete_commit..HEAD`. A pass that examined three files and then advanced the baseline makes everything else changed before that commit permanently invisible to later audits — the ledger would report healthy incremental coverage while silently narrowing it. The flag exists so that cannot happen by accident.
+
+Omitted, it defaults to `true` for `mode: "full"` and `false` for `mode: "incremental"`. So a full scan behaves as before, and an incremental pass must assert coverage deliberately: set `"complete": true` when every path `plan` listed was examined, and leave it alone for a targeted pass such as a single-concern sweep or a review of one subsystem.
+
+A targeted pass is still worth recording. Its findings, counts and scope all persist; only the claim about coverage is withheld.
 
 ## Authorization
 

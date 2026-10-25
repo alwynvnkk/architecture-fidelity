@@ -426,11 +426,23 @@ def apply_delta(ledger: dict[str, Any], delta: dict[str, Any]) -> dict[str, Any]
         for item in ledger["findings"]
         if item["status"] == "reopened" and previous_status.get(item["id"]) != "reopened"
     ]
-    ledger["audit"] = {"last_complete_commit": commit, "completed_at": now}
+    # Only a pass that covered its whole planned scope may move the baseline.
+    # `plan` computes the next scope as baseline..HEAD, so advancing it after a
+    # targeted pass makes everything changed before that commit permanently
+    # invisible to later audits. A full scan covers everything by definition; an
+    # incremental pass has to assert that it finished what `plan` gave it.
+    complete = audit.get("complete")
+    if complete is None:
+        complete = mode == "full"
+    if not isinstance(complete, bool):
+        raise LedgerError("delta.audit.complete must be true or false")
+    if complete:
+        ledger["audit"] = {"last_complete_commit": commit, "completed_at": now}
     ledger["history"].append(
         {
             "completed_at": now,
             "mode": mode,
+            "complete": complete,
             "base_commit": base_commit,
             "commit": commit,
             "scope": scope,

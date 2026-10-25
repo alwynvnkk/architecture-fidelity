@@ -47,6 +47,42 @@ class ArchitectureLedgerTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
+    def audit_delta(self, **audit: object) -> dict:
+        base: dict = {
+            "mode": "incremental",
+            "base_commit": self.commit,
+            "commit": self.commit,
+            "scope": ["src/service.py"],
+        }
+        base.update(audit)
+        return {"completed_at": "2026-08-30T13:00:00Z", "audit": base}
+
+    def test_incremental_delta_does_not_claim_a_complete_audit(self) -> None:
+        # audit_plan computes the next scope as baseline..HEAD, so a targeted
+        # pass that moved the baseline would hide everything changed before it.
+        ledger = self.ledger()
+        ledger["audit"] = {"last_complete_commit": None, "completed_at": None}
+
+        updated = ledger_module.apply_delta(ledger, self.audit_delta())
+
+        self.assertIsNone(updated["audit"]["last_complete_commit"])
+        self.assertFalse(updated["history"][-1]["complete"])
+
+    def test_delta_advances_the_baseline_only_when_coverage_is_asserted(self) -> None:
+        for audit in ({"complete": True}, {"mode": "full"}):
+            with self.subTest(audit=audit):
+                ledger = self.ledger()
+                ledger["audit"] = {"last_complete_commit": None, "completed_at": None}
+
+                updated = ledger_module.apply_delta(ledger, self.audit_delta(**audit))
+
+                self.assertEqual(updated["audit"]["last_complete_commit"], self.commit)
+                self.assertTrue(updated["history"][-1]["complete"])
+
+        ledger = self.ledger()
+        with self.assertRaises(ledger_module.LedgerError):
+            ledger_module.apply_delta(ledger, self.audit_delta(complete="yes"))
+
     def ledger(self) -> dict:
         return {
             "schema_version": 1,
