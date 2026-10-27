@@ -83,6 +83,117 @@ class ArchitectureLedgerTests(unittest.TestCase):
         with self.assertRaises(ledger_module.LedgerError):
             ledger_module.apply_delta(ledger, self.audit_delta(complete="yes"))
 
+    def test_targeted_first_scan_keeps_full_audit_required(self) -> None:
+        delta = self.seed_delta()
+        delta["audit"]["complete"] = False
+
+        self.apply_delta_cli(delta)
+
+        path = self.root / ".architecture-fidelity/ledger.json"
+        written = json.loads(path.read_text())
+        self.assertEqual(len(written["landmarks"]), 1)
+        self.assertIsNone(written["audit"]["last_complete_commit"])
+        self.assertFalse(written["history"][-1]["complete"])
+        self.assertTrue(ledger_module.audit_plan(self.root, written)["full_scan_required"])
+
+    def test_partial_full_scan_preserves_an_existing_baseline(self) -> None:
+        ledger = self.ledger()
+        previous = dict(ledger["audit"])
+
+        updated = ledger_module.apply_delta(
+            ledger, self.audit_delta(mode="full", commit="later-commit", complete=False)
+        )
+
+        self.assertEqual(updated["audit"], previous)
+        self.assertFalse(updated["history"][-1]["complete"])
+
+    def repetition_finding(self) -> dict:
+        return {
+            "status": "open",
+            "severity": "medium",
+            "category": "duplication",
+            "summary": "Repeated guard",
+            "invariant": "One guard owner",
+            "impact": "3 occurrences: src/a.py, src/b.py, src/c.py",
+            "correction": "Centralize the guard",
+            "anchors": [{"path": "src/service.py"}],
+            "first_seen_commit": self.commit,
+            "last_verified_commit": self.commit,
+            "events": [],
+        }
+
+    def test_evidence_update_preserves_identity_status_and_event_history(self) -> None:
+        ledger = ledger_module.apply_delta(
+            self.ledger(), {**self.audit_delta(), "findings": [self.repetition_finding()]}
+        )
+        initial = dict(ledger["findings"][0])
+        for count in (4, 5):
+            delta = {
+                **self.audit_delta(),
+                "findings": [{
+                    **initial,
+                    "impact": f"{count} occurrences",
+                    "evidence_reason": f"Count increased to {count}",
+                }],
+            }
+            ledger = ledger_module.apply_delta(ledger, delta)
+
+        finding = ledger["findings"][0]
+        for field in ("id", "fingerprint", "status", "first_seen_commit"):
+            self.assertEqual(finding[field], initial[field])
+        self.assertEqual(finding["impact"], "5 occurrences")
+        self.assertEqual([event["reason"] for event in finding["events"]], [
+            "Count increased to 4", "Count increased to 5",
+        ])
+        self.assertTrue(all(event["status"] == "open" for event in finding["events"]))
+        self.assertTrue(all(event["commit"] == self.commit for event in finding["events"]))
+        self.assertTrue(all(event["at"] == delta["completed_at"] for event in finding["events"]))
+        self.assertNotIn("evidence_reason", finding)
+
+    def test_evidence_reason_does_not_replace_a_required_transition_reason(self) -> None:
+        ledger = ledger_module.apply_delta(
+            self.ledger(), {**self.audit_delta(), "findings": [self.repetition_finding()]}
+        )
+        finding = ledger["findings"][0]
+        with self.assertRaises(ledger_module.LedgerError):
+            ledger_module.apply_delta(ledger, {
+                **self.audit_delta(),
+                "findings": [{**finding, "status": "resolved", "evidence_reason": "4 occurrences"}],
+            })
+
+    def test_evidence_reason_requires_nonempty_text(self) -> None:
+        for reason in ("", "  ", 4):
+            with self.subTest(reason=reason), self.assertRaises(ledger_module.LedgerError):
+                ledger_module.apply_delta(self.ledger(), {
+                    **self.audit_delta(),
+                    "findings": [{**self.repetition_finding(), "evidence_reason": reason}],
+                })
+
+    def test_new_finding_cannot_silently_discard_an_evidence_reason(self) -> None:
+        with self.assertRaises(ledger_module.LedgerError):
+            ledger_module.apply_delta(self.ledger(), {
+                **self.audit_delta(),
+                "findings": [{**self.repetition_finding(), "evidence_reason": "Initial evidence"}],
+            })
+
+    def test_transition_and_new_evidence_are_both_recorded(self) -> None:
+        ledger = ledger_module.apply_delta(
+            self.ledger(), {**self.audit_delta(), "findings": [self.repetition_finding()]}
+        )
+        finding = ledger["findings"][0]
+        updated = ledger_module.apply_delta(ledger, {
+            **self.audit_delta(),
+            "findings": [{
+                **finding, "status": "planned", "transition_reason": "Remediation scheduled",
+                "evidence_reason": "Count increased to 4", "impact": "4 occurrences",
+            }],
+        })
+        events = updated["findings"][0]["events"]
+        self.assertEqual([event["reason"] for event in events], [
+            "Remediation scheduled", "Count increased to 4",
+        ])
+        self.assertEqual([event["status"] for event in events], ["planned", "planned"])
+
     def ledger(self) -> dict:
         return {
             "schema_version": 1,

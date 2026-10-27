@@ -368,21 +368,31 @@ def upsert_findings(ledger: dict[str, Any], values: list[Any], now: str) -> list
             )
         existing = id_match or fingerprint_match
         transition_reason = incoming.pop("transition_reason", None)
+        evidence_reason = incoming.pop("evidence_reason", None)
+        if evidence_reason is not None:
+            require_text(evidence_reason, f"delta.findings[{index}].evidence_reason")
+            if existing is None:
+                raise LedgerError(f"delta.findings[{index}].evidence_reason requires an existing finding")
         if existing:
             identifier = existing["id"]
             first_seen = existing["first_seen_commit"]
             events = list(existing.get("events", []))
+            reasons = []
             if incoming.get("status", existing["status"]) != existing["status"]:
                 if not transition_reason:
                     raise LedgerError(
                         f"delta.findings[{index}].transition_reason is required when status changes"
                     )
+                reasons.append(transition_reason)
+            if evidence_reason is not None:
+                reasons.append(evidence_reason)
+            for reason in reasons:
                 events.append(
                     {
-                        "status": incoming.get("status"),
+                        "status": incoming.get("status", existing["status"]),
                         "at": now,
-                        "commit": incoming.get("last_verified_commit"),
-                        "reason": transition_reason,
+                        "commit": incoming.get("last_verified_commit", existing["last_verified_commit"]),
+                        "reason": reason,
                     }
                 )
             incoming = {**existing, **incoming, "id": identifier, "first_seen_commit": first_seen, "events": events}

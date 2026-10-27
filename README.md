@@ -62,7 +62,9 @@ Use the installed architecture-fidelity skill automatically when a task or its r
         ├── scripts/
         │   └── architecture_ledger.py
         └── references/
+            ├── design-decisions.md
             ├── duplication-sweep.md
+            ├── ledger-format.md
             ├── pattern-selection.md
             ├── project-ledger.md
             ├── python.md
@@ -70,13 +72,15 @@ Use the installed architecture-fidelity skill automatically when a task or its r
             └── safe-refactor.md
 ```
 
-The single `SKILL.md` is canonical across all hosts. Product manifests only package that shared implementation, and the Copilot adapters under `.copilot-plugin/` route to it rather than restating it.
+The short `SKILL.md` entrypoint is canonical across all hosts. It routes to references only when a design choice, review, structural move, or ledger operation needs that detail; agents should not load every reference. Ledger JSON formats live separately from audit planning, and the dependency-free helper executes without loading its source into context.
+
+Product manifests only package that shared implementation, and the Copilot adapters under `.copilot-plugin/` route to it rather than restating it.
 
 ## Project memory
 
 Architecture Fidelity can keep a reviewable ledger at `.architecture-fidelity/ledger.json` in the repository being audited. It remembers both healthy architectural landmarks and finding lifecycles, while Git remains the source of truth.
 
-The first audit that clears the significance gate with repository edits authorized creates the ledger itself, seeded from what that pass established. It records only load-bearing architecture — canonical owners, enforced boundaries, extension seams, closed vocabularies, and findings that are high severity or span more than one module — capped at roughly ten of each, so a first ledger stays reviewable in a pull request. It does not trigger a repository-wide inventory, and it is not created at all when nothing clears that bar. A review-only request never writes it; the skill reports the proposed delta instead.
+The first audit that clears the significance gate with repository edits authorized creates the ledger itself, seeded from what that pass established. It records only load-bearing architecture — canonical owners, enforced boundaries, extension seams, closed vocabularies, and findings that are high severity or span more than one module — capped at roughly ten of each, so a first ledger stays reviewable in a pull request. A targeted seed explicitly uses `audit.complete: false`, retaining its findings without claiming complete coverage. It does not trigger a repository-wide inventory, and it is not created at all when nothing clears that bar. A review-only request never writes it; the skill reports the proposed delta instead.
 
 To create an empty ledger up front instead:
 
