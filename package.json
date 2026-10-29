@@ -2,12 +2,15 @@
   "name": "architecture-fidelity",
   "version": "0.6.0",
   "private": true,
-  "description": "Architectural-fidelity skill package for coding agents.",
+  "description": "Skills for architectural coherence and evidence-based repository assessment.",
   "keywords": [
     "pi-package",
     "agent-skill",
     "architecture",
-    "refactoring"
+    "refactoring",
+    "repository-review",
+    "security",
+    "due-diligence"
   ],
   "pi": {
     "skills": [

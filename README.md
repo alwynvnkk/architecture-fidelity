@@ -1,6 +1,13 @@
 # Architecture Fidelity
 
-Architecture Fidelity is a shared agent skill for Codex, Claude Code, GitHub Copilot, and Pi. It keeps feature work aligned with the codebase's existing responsibilities and extension seams as the system grows.
+Architecture Fidelity is a shared skill package for Codex, Claude Code, GitHub Copilot, and Pi. It supports coherent implementation and evidence-based decisions about the repositories you use.
+
+| Skill | Purpose |
+|---|---|
+| [architecture-fidelity](skills/architecture-fidelity/SKILL.md) | Keep feature work aligned with existing responsibilities and extension seams. |
+| [repo-review](skills/repo-review/SKILL.md) | Assess implemented functionality, practical value, security, privacy, and adoption fit. |
+
+The skills remain separate entrypoints within one package. `repo-review` uses `architecture-fidelity` for its architecture lens; design rules stay in one place.
 
 It addresses a recurring failure mode in agent-written code: the requested behavior works, but arrives as a parallel service, raw string option, duplicated branch, or new helper even though the repository already contains the right concept.
 
@@ -56,6 +63,13 @@ Use the installed architecture-fidelity skill automatically when a task or its r
 │   └── prompts/architecture-fidelity.prompt.md
 ├── package.json
 └── skills/
+    ├── repo-review/
+    │   ├── SKILL.md
+    │   ├── agents/openai.yaml
+    │   └── references/
+    │       ├── assessment.md
+    │       ├── functionality-and-value.md
+    │       └── security-and-privacy.md
     └── architecture-fidelity/
         ├── SKILL.md
         ├── agents/openai.yaml
@@ -72,7 +86,7 @@ Use the installed architecture-fidelity skill automatically when a task or its r
             └── safe-refactor.md
 ```
 
-The short `SKILL.md` entrypoint is canonical across all hosts. It routes to references only when a design choice, review, structural move, or ledger operation needs that detail; agents should not load every reference. Ledger JSON formats live separately from audit planning, and the dependency-free helper executes without loading its source into context.
+Each skill’s short `SKILL.md` entrypoint is canonical across all hosts. It routes to references only when a design choice, review, structural move, or ledger operation needs that detail; agents should not load every reference. Ledger JSON formats live separately from audit planning, and the dependency-free helper executes without loading its source into context.
 
 Product manifests only package that shared implementation, and the Copilot adapters under `.copilot-plugin/` route to it rather than restating it.
 
@@ -171,3 +185,17 @@ Invoke `/skill:architecture-fidelity` explicitly or allow Pi to select it from t
 ## Design stance
 
 The goal is not more abstraction. It is fewer competing concepts, clearer ownership, and cheaper future change. Local duplication may be better than coupling unrelated responsibilities; composition is usually better than inheritance for independent variation; a plain function is often better than a class with no invariant. The skill asks agents to make those choices from repository evidence rather than habit.
+
+## Repository assessment
+
+Use `repo-review` to decide what a repository actually delivers, whether its claims hold up, and whether to adopt it, pilot it, borrow ideas, or pass. It loads only the requested lenses and keeps source findings distinct from deployment-dependent risks and unverified hypotheses. Reviews do not change the target repository or its architecture ledger.
+
+For example:
+
+```text
+Use $repo-review to assess this repository's functionality, practical value, and security: <URL>
+```
+
+Codex and Pi installations that copy or link individual skills should include both `skills/repo-review` and `skills/architecture-fidelity`. The package manifests already discover the whole `skills/` directory. Claude Code exposes `/architecture-fidelity:repo-review`; Pi exposes `/skill:repo-review`.
+
+For Copilot, copy `skills/repo-review` into `.github/skills/` alongside `architecture-fidelity`, and install the adapters using the existing instructions above. `prompts/repo-review.prompt.md` provides `/repo-review`; `agents/repo-review.agent.md` provides the repository assessment agent. Both route to the canonical skill without duplicating its review guidance.

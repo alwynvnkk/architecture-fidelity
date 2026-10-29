@@ -1,7 +1,7 @@
 {
   "name": "architecture-fidelity",
   "version": "0.6.0",
-  "description": "Keeps codebase architecture coherent as features and variants are added.",
+  "description": "Skills for architectural coherence and evidence-based repository assessment.",
   "author": {
     "name": "Architecture Fidelity contributors"
   },
@@ -9,13 +9,16 @@
     "architecture",
     "refactoring",
     "code-quality",
-    "object-oriented-design"
+    "object-oriented-design",
+    "repository-review",
+    "security",
+    "due-diligence"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Architecture Fidelity",
-    "shortDescription": "Keep architecture coherent as code evolves.",
-    "longDescription": "Automatically applies a significance gate to meaningful code changes, then guides agents to reuse existing responsibilities, identify proven abstraction and specialization opportunities, model domain options explicitly, preserve boundaries, and maintain repository-side architectural memory without duplicating lint rules.",
+    "shortDescription": "Preserve architecture and assess repository trust.",
+    "longDescription": "Includes architecture-fidelity for coherent implementation and architecture reviews, and repo-review for source-backed assessments of functionality, practical value, security, privacy, and adoption fit. Each skill loads detailed guidance only when needed.",
     "developerName": "Architecture Fidelity contributors",
     "category": "Coding",
     "capabilities": [
@@ -26,7 +29,8 @@
       "Implement this feature with architectural fidelity.",
       "Check whether this completed diff warrants an architecture fidelity pass.",
       "Review this change for architectural drift.",
-      "Find the right reuse or abstraction seam here."
+      "Find the right reuse or abstraction seam here.",
+      "Assess this repository\u2019s functionality, practical value, and security."
     ]
   }
 }

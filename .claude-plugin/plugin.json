@@ -1,7 +1,7 @@
 {
   "name": "architecture-fidelity",
   "version": "0.6.0",
-  "description": "Automatically checks meaningful changes for architectural fidelity without running on mechanical edits.",
+  "description": "Skills for architectural coherence and evidence-based repository assessment.",
   "author": {
     "name": "Architecture Fidelity contributors"
   }

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Repository Review"
+  short_description: "Assess repository value, architecture, and trust"
