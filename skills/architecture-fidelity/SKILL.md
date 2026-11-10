@@ -17,6 +17,8 @@ Inspect the request, changed paths, and diff summary. Run once during planning w
 
 Load references only when their condition applies. Do not read the whole reference directory.
 
+Before adding a conversion, fallback, or special case to compensate for an incorrect input, trace where that input is produced and check the receiving contract. Prefer correcting an owned producer when compatibility permits. Read [Correct the producer](references/design-decisions.md#correct-the-producer) when deciding whether downstream adaptation is justified. Apply this check to local fixes too.
+
 ## Workflow
 
 1. **Establish scope and memory.** Identify the requested behavior, affected owners, and compatibility constraints. In GitHub Copilot, use the [personal journal workflow](references/project-ledger.md#github-copilot) for all ledger access. On other clients, if `.architecture-fidelity/ledger.json` exists, read [project-ledger.md](references/project-ledger.md), validate it, and plan from its baseline. Expand changed paths to owners, callers, consumers, registration points, tests, and the nearest analogue; cached claims need current evidence where touched.

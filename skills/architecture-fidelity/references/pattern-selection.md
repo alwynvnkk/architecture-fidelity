@@ -56,6 +56,7 @@ Avoid a base class whose methods are mostly optional, raise "not supported," or 
 
 ## Common architectural traps
 
+- **Compensating for an incorrect producer.** A conversion layer, alias map, or fallback keeps owned callers sending incorrect inputs. Trace the first contract violation and evaluate a source correction using [Correct the producer](design-decisions.md#correct-the-producer).
 - **Parallel path:** adding a new service or flow beside the existing orchestrator instead of extending it.
 - **Parameter soup:** one implementation accumulates booleans and nullable options for unrelated variants.
 - **Utility gravity:** unrelated responsibilities gather in a generic helper module because it is easy to import.

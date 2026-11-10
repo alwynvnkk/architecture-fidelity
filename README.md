@@ -33,6 +33,8 @@ The skill makes architectural reconnaissance part of implementation and review:
 
 After a solution works, the skill asks whether the same supported behavior can be expressed clearly with less code, and what the change makes unnecessary. This bounded simplification pass considers affected callers and helpers together, looking for redundant decisions, state, and earlier workarounds. Reductions should improve concepts, branches, or maintenance points while preserving readability and contracts. Line count is supporting evidence, with no reduction quota. Relevant checks run against the final simplified change.
 
+Before adding downstream conversions or fallbacks for incorrect inputs, the skill traces the producer and receiving contract. It prefers correcting owned callers when compatibility permits, and requires concrete justification for adapters serving external producers, supported legacy inputs, or intentional vocabulary boundaries. This check also applies to local fixes.
+
 This is intentionally not a replacement for Ruff, formatters, type checkers, or static-analysis rules. Those tools own mechanical consistency. Architecture Fidelity owns repository-level design decisions that require understanding responsibilities, callers, and change pressure.
 
 ## Automatic activation

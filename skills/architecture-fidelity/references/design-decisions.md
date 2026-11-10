@@ -8,6 +8,16 @@ Before choosing a design, ask whether the construct needs to exist. Remove specu
 
 Search for the responsibility as well as the proposed name. Inspect the definition, direct callers, tests, and an analogous flow. Reuse unchanged where possible; extend at an existing seam before adding a competing path.
 
+## Correct the producer
+
+Watch for downstream code that compensates for an owned caller violating a contract. Examples include alias maps for misspelled parameters, branches translating incorrect values, and fallbacks that conceal a missing required field. Such code can make the observed output correct while preserving the defect and creating a second vocabulary to maintain.
+
+Trace the value from its producer through the relevant call chain to the receiving contract. Establish where the first contract violation occurs and inspect other affected consumers. When the producer is owned and its callers can migrate within scope, correct the argument, value, or type there. Remove compensation made unnecessary by that correction after checking remaining callers and stored inputs. Verify that the producer emits the correct contract and the normal entry point produces the intended result.
+
+For example, if owned tracing calls supply an incorrect parameter or value, correct those calls or the shared producer that supplies them. A growing conditional in the tracing wrapper that translates each mistake preserves competing representations. A legitimate internal vocabulary translated to an external tracing contract can justify an adapter.
+
+Keep adaptation when evidence establishes an external producer, a supported older client or stored representation, or an intentional boundary between distinct vocabularies. Name that constraint and place translation at its owning boundary. Cover both supported legacy inputs and correct current inputs. For temporary compatibility, state the removal condition. If correcting the producer exceeds the task, report the cause and any necessary bounded workaround explicitly.
+
 ## Establish ownership and variation
 
 An abstraction needs current evidence: a shared invariant and reason to change, an established extension seam, a closed variation axis, or coordinated caller edits that belong behind one boundary. Similar syntax alone is insufficient. Centralize validation, mappings, state transitions, error semantics, and lifecycle policy only when they enforce the same rule.
