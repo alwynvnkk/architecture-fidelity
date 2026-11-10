@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maintain Architecture Fidelity's repository-side project ledger."""
+"""Maintain Architecture Fidelity's project ledger."""
 
 from __future__ import annotations
 
@@ -55,9 +55,24 @@ def repository_root(start: Path) -> Path:
     return Path(run_git(start, "rev-parse", "--show-toplevel")).resolve()
 
 
-def ledger_path(root: Path, override: str | None) -> Path:
+def ledger_path(root: Path, override: str | None, *, local: bool = False) -> Path:
+    if local:
+        skill = Path(__file__).resolve().parents[1]
+        common_dir = run_git(root, "rev-parse", "--path-format=absolute", "--git-common-dir")
+        project_key = hashlib.sha256(os.fsencode(Path(common_dir).resolve())).hexdigest()
+        path = skill / "journals" / project_key / "ledger.json"
+        if (
+            run_git(skill, "rev-parse", "--show-toplevel", check=False)
+            or not path.resolve().is_relative_to(skill)
+        ):
+            raise LedgerError("install the skill outside Git checkouts to use --local")
+        return path
     candidate = Path(override) if override else DEFAULT_LEDGER
     return candidate if candidate.is_absolute() else root / candidate
+
+
+def display_path(root: Path, path: Path) -> Path:
+    return path.relative_to(root) if path.is_relative_to(root) else path
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -479,27 +494,27 @@ def empty_ledger(root: Path) -> dict[str, Any]:
 
 def command_init(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.root).resolve())
-    path = ledger_path(root, args.ledger)
+    path = ledger_path(root, args.ledger, local=args.local)
     if path.exists():
         raise LedgerError(f"refusing to overwrite existing ledger: {path}")
     ledger = empty_ledger(root)
     validate_ledger(ledger)
     write_json_atomic(path, ledger)
-    print(path.relative_to(root))
+    print(display_path(root, path))
     return 0
 
 
 def command_validate(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.root).resolve())
-    path = ledger_path(root, args.ledger)
+    path = ledger_path(root, args.ledger, local=args.local)
     validate_ledger(load_json(path))
-    print(f"valid: {path.relative_to(root)}")
+    print(f"valid: {display_path(root, path)}")
     return 0
 
 
 def command_plan(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.root).resolve())
-    path = ledger_path(root, args.ledger)
+    path = ledger_path(root, args.ledger, local=args.local)
     if not path.exists():
         plan = {
             "ledger_exists": False,
@@ -517,6 +532,8 @@ def command_plan(args: argparse.Namespace) -> int:
         ledger = load_json(path)
         validate_ledger(ledger)
         plan = audit_plan(root, ledger)
+    if args.local:
+        plan["ledger_path"] = str(path)
     print(json.dumps(plan, indent=2))
     return 0
 
@@ -536,7 +553,7 @@ def command_fingerprint(args: argparse.Namespace) -> int:
 
 def command_apply(args: argparse.Namespace) -> int:
     root = repository_root(Path(args.root).resolve())
-    path = ledger_path(root, args.ledger)
+    path = ledger_path(root, args.ledger, local=args.local)
     # The first authorized audit of a repository creates the ledger, so memory
     # starts on the scan that has evidence rather than a separate setup step.
     created = not path.exists()
@@ -545,14 +562,16 @@ def command_apply(args: argparse.Namespace) -> int:
     delta = load_json(Path(args.delta).resolve())
     updated = apply_delta(ledger, delta)
     write_json_atomic(path, updated)
-    print(f"{'created' if created else 'updated'}: {path.relative_to(root)}")
+    print(f"{'created' if created else 'updated'}: {display_path(root, path)}")
     return 0
 
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--root", default=".", help="path inside the target Git repository")
-    result.add_argument("--ledger", help=f"ledger path (default: {DEFAULT_LEDGER})")
+    storage = result.add_mutually_exclusive_group()
+    storage.add_argument("--ledger", help=f"ledger path (default: {DEFAULT_LEDGER})")
+    storage.add_argument("--local", action="store_true", help="store journals under the installed skill")
     commands = result.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="create an empty project ledger").set_defaults(handler=command_init)
     commands.add_parser("validate", help="validate the project ledger").set_defaults(handler=command_validate)

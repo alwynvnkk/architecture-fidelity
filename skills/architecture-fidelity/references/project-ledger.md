@@ -1,12 +1,12 @@
 # Project Architecture Ledger
 
-Read when `.architecture-fidelity/ledger.json` exists, the user requests architectural memory, or an authorized implementation should seed it. It is a cache of claims; current code, tests, and repository documentation override it.
+Read in GitHub Copilot, when `.architecture-fidelity/ledger.json` exists, when the user requests architectural memory, or when an authorized implementation should seed it. It is a cache of claims; current code, tests, and repository documentation override it.
 
 A review-only request authorizes no ledger writes. Report a proposed delta instead. For authorized implementation, create or update only load-bearing memory already established by the pass; mention it in the handoff.
 
 ## Helper
 
-Locate the packaged script relative to this skill:
+Locate the packaged script relative to this skill. For Copilot, use the [personal installation and flags below](#github-copilot). The default repository-ledger command for other clients is:
 
 ```bash
 python3 <skill-directory>/scripts/architecture_ledger.py --root <repository> plan
@@ -20,7 +20,18 @@ python3 <skill-directory>/scripts/architecture_ledger.py --root <repository> pla
 | `fingerprint` | Compute identity from category, invariant, and path/symbol anchors. |
 | `apply-delta --delta <file>` | Atomically merge authorized updates, creating the ledger if absent; retain identities, finding events, and the latest 20 audit records. |
 
-Read [ledger-format.md](ledger-format.md) only when authoring or inspecting JSON. Run the helper without reading its implementation unless debugging it. If unavailable, follow the same format and rules manually.
+Read [ledger-format.md](ledger-format.md) only when authoring or inspecting JSON. Run the helper without reading its implementation unless debugging it. Outside Copilot, if the helper is unavailable, follow the same format and rules manually.
+
+### GitHub Copilot
+
+Use the helper from the personal skill installation outside Git checkouts, usually `~/.copilot/skills/architecture-fidelity`. Pass `--local` before the subcommand on every ledger operation:
+
+```bash
+python3 "$HOME/.copilot/skills/architecture-fidelity/scripts/architecture_ledger.py" \
+  --root "/path/to/repository" --local plan
+```
+
+Use the same flags for `validate`, `init`, and `apply-delta`. The plan reports the absolute `ledger_path` for inspection even on the first run. Put any temporary delta file outside the repository and remove it after use. If the personal install or its storage is unavailable, report findings in the response and continue without persistent memory. Keep all journal files and staging files outside the target checkout, including when invoked through a repository adapter.
 
 ## First seed and coverage
 

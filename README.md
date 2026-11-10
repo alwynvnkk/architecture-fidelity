@@ -92,7 +92,7 @@ Product manifests only package that shared implementation, and the Copilot adapt
 
 ## Project memory
 
-Architecture Fidelity can keep a reviewable ledger at `.architecture-fidelity/ledger.json` in the repository being audited. It remembers both healthy architectural landmarks and finding lifecycles, while Git remains the source of truth.
+Outside GitHub Copilot, Architecture Fidelity can keep a reviewable ledger at `.architecture-fidelity/ledger.json` in the repository being audited. It remembers both healthy architectural landmarks and finding lifecycles, while Git remains the source of truth.
 
 The first audit that clears the significance gate with repository edits authorized creates the ledger itself, seeded from what that pass established. It records only load-bearing architecture — canonical owners, enforced boundaries, extension seams, closed vocabularies, and findings that are high severity or span more than one module — capped at roughly ten of each, so a first ledger stays reviewable in a pull request. A targeted seed explicitly uses `audit.complete: false`, retaining its findings without claiming complete coverage. It does not trigger a repository-wide inventory, and it is not created at all when nothing clears that bar. A review-only request never writes it; the skill reports the proposed delta instead.
 
@@ -135,27 +135,20 @@ Invoke `/architecture-fidelity:architecture-fidelity`, or let Claude select it f
 
 ### GitHub Copilot
 
-Copilot reads its customization from the repository being worked on rather than from an installed plugin, so the skill and its adapters are installed into that repository's `.github/` directory:
+Install the skill once in your personal Copilot skills directory. Copilot CLI discovers personal skills across repositories. See [GitHub's personal skill setup](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills).
 
 ```bash
-mkdir -p /path/to/repository/.github/skills
-cp -R "/absolute/path/to/architecture-fidelity/skills/architecture-fidelity" \
-  /path/to/repository/.github/skills/
-cp -R "/absolute/path/to/architecture-fidelity/.copilot-plugin/agents" \
-      "/absolute/path/to/architecture-fidelity/.copilot-plugin/instructions" \
-      "/absolute/path/to/architecture-fidelity/.copilot-plugin/prompts" \
-  /path/to/repository/.github/
+mkdir -p "$HOME/.copilot/skills"
+cp -R "/absolute/path/to/architecture-fidelity/skills/architecture-fidelity" "$HOME/.copilot/skills/"
 ```
 
-The `.copilot-plugin/` subdirectories mirror their destinations under `.github/`, so nothing needs renaming. Each adapter covers a different Copilot surface:
+Start a new session or run `/skills reload` in Copilot CLI. Invoke `/architecture-fidelity` or let Copilot select the skill for matching work.
 
-- `instructions/architecture-fidelity.instructions.md` carries the significance gate and applies to every request (`applyTo: "**"`), so Copilot routes to the skill without being named. This is the Copilot equivalent of implicit invocation.
-- `prompts/architecture-fidelity.prompt.md` adds `/architecture-fidelity` in Copilot Chat for an explicit pass on the current task or diff.
-- `agents/architecture-fidelity.agent.md` registers a custom agent for delegated work, including Copilot coding agent.
+Copilot stores architectural findings and their history under `~/.copilot/skills/architecture-fidelity/journals/<project-key>/ledger.json`. The key comes from the local Git common directory, so linked worktrees share a journal and separate clones get separate journals. Contributor checkouts need no skill files, journals, or `.gitignore` entries. Copy the skill for a personal install so the journal directory stays outside the source checkout as well.
 
-All three route to `.github/skills/architecture-fidelity/SKILL.md` instead of restating its rules, so the canonical skill stays the only place the invariants are maintained. Install only the surfaces you want; the instructions file alone is enough for automatic activation.
+To bring forward an existing repository ledger, run the personal helper with `--root <repository> --local plan` and use its `ledger_path`. If that destination has no ledger yet, copy the old JSON there and run `--local validate`. Preserve the installed `journals/` directory when updating the skill.
 
-During local development the skill directory can be a symlink, but Copilot coding agent on github.com only sees committed files, so copy it for that surface. Repositories that prefer a single instructions file can instead reference the skill from `.github/copilot-instructions.md` or `AGENTS.md` using the snippet in [Automatic activation](#automatic-activation).
+Teams can still opt into repository routing by installing the adapters from `.copilot-plugin/` into the corresponding `.github/agents/`, `.github/instructions/`, and `.github/prompts/` directories and copying the shared skill into `.github/skills/`. These adapters can run the workflow without persistent memory when a personal installation is unavailable.
 
 ### Pi
 
@@ -198,4 +191,4 @@ Use $repo-review to assess this repository's functionality, practical value, and
 
 Codex and Pi installations that copy or link individual skills should include both `skills/repo-review` and `skills/architecture-fidelity`. The package manifests already discover the whole `skills/` directory. Claude Code exposes `/architecture-fidelity:repo-review`; Pi exposes `/skill:repo-review`.
 
-For Copilot, copy `skills/repo-review` into `.github/skills/` alongside `architecture-fidelity`, and install the adapters using the existing instructions above. `prompts/repo-review.prompt.md` provides `/repo-review`; `agents/repo-review.agent.md` provides the repository assessment agent. Both route to the canonical skill without duplicating its review guidance.
+For Copilot, copy `skills/repo-review` into your personal skills directory alongside `architecture-fidelity`. For optional repository routing, copy it into `.github/skills/` and install the adapters as described above. `prompts/repo-review.prompt.md` provides `/repo-review`; `agents/repo-review.agent.md` provides the repository assessment agent. Both route to the canonical skill without duplicating its review guidance.
